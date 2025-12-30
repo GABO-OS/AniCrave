@@ -1,0 +1,57 @@
+AniCrave Entity Relationship Diagram
+
+This document contains the Entity Relationship Diagram (ERD) in Mermaid format and its descriptions.
+
+---
+ERD (Mermaid Code):
+
+erDiagram
+    SIGNUP ||--o{ FAVORITES : "has"
+    ANIME ||--o{ FAVORITES : "is favorited by"
+
+    SIGNUP {
+        int id PK
+        string username UNIQUE
+        string email UNIQUE
+        string password_hashed
+        string gender
+        date birthday
+        string contact
+        text bio
+        string profile_picture
+        timestamp created_at
+    }
+
+    ANIME {
+        int id PK
+        string title
+        string cover_image
+        text description
+        string genres
+        int year
+        string season
+        string type
+        enum status
+    }
+
+    FAVORITES {
+        int id PK
+        int user_id FK
+        int anime_id FK
+        timestamp added_at
+    }
+
+---
+Relationship Details:
+
+1. Users (SIGNUP) to Favorites:
+- One-to-Many: A single user can have multiple favorite anime entries.
+- Foreign Key: favorites.user_id references signup.id.
+
+2. Anime to Favorites:
+- One-to-Many: A single anime can be added to the favorites list of many different users.
+- Foreign Key: favorites.anime_id references anime.id.
+
+3. Favorites (Junction Table):
+- Serves as the connection between users and anime.
+- Includes a unique constraint on the combination of user_id and anime_id to prevent duplicate favorites.
