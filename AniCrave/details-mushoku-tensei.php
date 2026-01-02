@@ -1,209 +1,254 @@
 <?php
+// Magsimula ng session upang ma-access ang user information (tulad ng $_SESSION['user_id'])
+session_start();
+
+// Isama ang connect.php para magkaroon ng access sa database connection ($con) at functions
 include 'connect.php';
-$anime = getAnimeByTitle($con, "Mushoku Tensei: Jobless Reincarnation Season 2");
+
+// Hanapin ang detalye ng anime base sa pamagat gamit ang utility function na getAnimeByTitle
+$anime = getAnimeByTitle($con, 'Mushoku Tensei: Jobless Reincarnation Season 2');
+
+// Kung walang nahanap na anime, bumalik sa index.php
+if (!$anime) {
+    header('Location: index.php');
+    exit();
+}
+
+// Kunin ang lahat ng characters na kabilang sa anime na ito gamit ang anime ID
+$characters = getCharactersByAnimeId($con, $anime['id']);
+
+// Default state: hindi favorite ang anime na ito
+$is_favorite = false;
+
+// Kung ang user ay naka-login, suriin kung ang anime na ito ay nasa kanilang favorites list sa database
+if (isset($_SESSION['user_id'])) {
+    $user_id = $_SESSION['user_id'];
+    $anime_id = $anime['id'];
+
+    // SQL query para hanapin ang records sa favorites table gamit ang user_id at anime_id
+    $check_sql = "SELECT id FROM favorites WHERE user_id = '$user_id' AND anime_id = '$anime_id'";
+    $check_result = mysqli_query($con, $check_sql);
+
+    // Kung may nahanap na row, ibig sabihin ay nasa favorites na ito ng user
+    if ($check_result && mysqli_num_rows($check_result) > 0) {
+        $is_favorite = true;
+    }
+}
 ?>
-<!DOCTYPE html>
-<html lang="en">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mushoku Tensei: Jobless Reincarnation Season 2 - AniCrave</title>
-    <link rel="stylesheet" href="styles.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Overpass:wght@400;600;700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-</head>
+<!-- Isama ang header component ng website -->
+<?php include 'includes/header.php'; ?>
 
-<body>
+<!-- Banner section: nagpapakita ng malaking imahe sa itaas ng pahina -->
+<div class="details-banner"
+    style="background-image: url('<?php echo $anime['banner_image'] ?? 'img/mushoku-banner.jpg'; ?>');">
+    <!-- Gradient shadow para sa visual effect sa ilalim ng banner -->
+    <div class="banner-shadow"></div>
+</div>
 
-    <header class="navbar">
-        <div class="container navbar-container">
-            <div class="logo">
-                AniCrave
-            </div>
-            <nav class="nav-links">
-                <a href="index.php">Home</a>
-                <a href="about.php">About</a>
-                <a href="favorites.php">Favorites</a>
-                <a href="account.php">Profile</a>
-            </nav>
-
-            <div class="auth-buttons">
-                <a href="login.php" class="login">Login</a>
-                <a href="login.php" class="signup">Sign Up</a>
-            </div>
-        </div>
-    </header>
-
-    <div class="details-banner"
-        style="background-image: url('<?php echo $anime['banner_image'] ?? 'img/tensei-banner.webp'; ?>');">
-        <div class="banner-shadow"></div>
-    </div>
-
-
-    <div class="container details-header-container">
-        <div class="details-cover">
-            <img src="<?php echo $anime['cover_image'] ?? 'img/tensei.webp'; ?>"
-                alt="Mushoku Tensei Cover">
-            <div class="action-buttons">
-                <button class="btn-action-fav" id="fav-btn">
-                    <span>Add to Favorites</span>
-                    <i class="fa-regular fa-heart"></i>
-                </button>
-            </div>
-        </div>
-        <div class="details-title-section">
-            <h1>Mushoku Tensei: Jobless Reincarnation Season 2</h1>
-            <p class="breadcrumbs">Mushoku Tensei II: Isekai Ittara Honki Dasu</p>
-            <p class="description-text">
-                Rudeus Greyrat's journey continues in the second season, as he deals with the aftermath of the
-                Mana Calamity and his separation from Eris. Now heading north, he aims to find his mother, Zenith,
-                while carving out a name for himself as a powerful adventurer.
-                <br><br>
-                This season focuses on Rudeus's growth as an individual, his experiences at the Ranoa Academy of Magic,
-                and his reunion with familiar faces from his past. The world continues to expand, revealing more of its
-                rich history and the complex lives of those who inhabit it.
-            </p>
+<!-- Main content container para sa header info ng anime -->
+<div class="container details-header-container">
+    <!-- Bahagi ng pabalat (cover) at action buttons -->
+    <div class="details-cover">
+        <!-- Ipakita ang cover image ng anime; kung wala, gumamit ng fallback -->
+        <img src="<?php echo $anime['cover_image'] ?? 'img/mushoku.jpg'; ?>" alt="Mushoku Tensei Cover">
+        <div class="action-buttons">
+            <!-- Favorite button: nagbabago ang hitsura base sa $is_favorite status -->
+            <button class="btn-action-fav <?php echo $is_favorite ? 'active' : ''; ?>" id="fav-btn"
+                data-id="<?php echo $anime['id']; ?>"
+                style="<?php echo $is_favorite ? 'background-color: #ff6b6b;' : ''; ?>">
+                <!-- Ipakita ang tamang text base sa status -->
+                <span><?php echo $is_favorite ? 'Added to Favorites' : 'Add to Favorites'; ?></span>
+                <!-- Ipakita ang tamang heart icon (solid kung favorite, regular kung hindi) -->
+                <i class="fa-<?php echo $is_favorite ? 'solid' : 'regular'; ?> fa-heart"></i>
+            </button>
         </div>
     </div>
+    <!-- Title at description section -->
+    <div class="details-title-section">
+        <!-- Pamagat ng anime -->
+        <h1>Mushoku Tensei: Jobless Reincarnation Season 2</h1>
+        <!-- Romaji or Alternative Title -->
+        <p class="breadcrumbs">Mushoku Tensei: Isekai Ittara Honki Dasu Season 2</p>
+        <!-- Story summary / Description -->
+        <p class="description-text">
+            After the sudden teleportation incident and his journey through the Demon Continent, Rudeus Greyrat finds
+            himself in the Northern territories, continuing his search for his missing family. Although he is now
+            skilled in magic and more mature, the emotional scars from Eris's departure linger.
+            <br><br>
+            As he navigates the challenges of the Ranoa Academy of Magic, he encounters new allies and enemies, all
+            while attempting to overcome his inner demons and fulfill his promise to himself to live this second
+            life to the fullest.
+        </p>
+    </div>
+</div>
 
-    <div class="container details-content-grid">
-        <div class="details-sidebar">
-            <div class="info-block">
-                <div class="info-item">
-                    <span class="label">Format</span>
-                    <span class="value">TV</span>
-                </div>
-                <div class="info-item">
-                    <span class="label">Episodes</span>
-                    <span class="value">24</span>
-                </div>
-                <div class="info-item">
-                    <span class="label">Status</span>
-                    <span class="value">Finished</span>
-                </div>
-                <div class="info-item">
-                    <span class="label">Season</span>
-                    <span class="value">Summer 2023 - Spring 2024</span>
-                </div>
-                <div class="info-item">
-                    <span class="label">Average Score</span>
-                    <span class="value">83%</span>
-                </div>
-                <div class="info-item">
-                    <span class="label">Studios</span>
-                    <span class="value">Studio Bind</span>
-                </div>
-                <div class="info-item">
-                    <span class="label">Genres</span>
-                    <span class="value">Adventure, Drama, Fantasy</span>
-                </div>
+<!-- Grid layout para sa sidebar (stats) at main body (characters) -->
+<div class="container details-content-grid">
+    <!-- Sidebar: nagpapakita ng metadata gaya ng genre, episodes, at status -->
+    <div class="details-sidebar">
+        <div class="info-block">
+            <div class="info-item">
+                <span class="label">Format</span>
+                <span class="value">TV</span>
             </div>
-
-            <div class="sidebar-section">
-                <h4>Tags</h4>
-                <div class="tags-list">
-                    <span class="tag">Isekai</span>
-                    <span class="tag">Magic</span>
-                    <span class="tag">Coming of Age</span>
-                    <span class="tag">Ecchi</span>
-                </div>
+            <div class="info-item">
+                <span class="label">Episodes</span>
+                <span class="value">24</span>
+            </div>
+            <div class="info-item">
+                <span class="label">Status</span>
+                <span class="value">Finished</span>
+            </div>
+            <div class="info-item">
+                <span class="label">Season</span>
+                <span class="value">Summer 2023 / Spring 2024</span>
+            </div>
+            <div class="info-item">
+                <span class="label">Average Score</span>
+                <span class="value">85%</span>
+            </div>
+            <div class="info-item">
+                <span class="label">Studios</span>
+                <span class="value">Studio Bind</span>
+            </div>
+            <div class="info-item">
+                <span class="label">Genres</span>
+                <span class="value">Adventure, Drama, Fantasy</span>
             </div>
         </div>
 
-        <div class="details-body">
-            <section class="content-section">
-                <h3>Characters</h3>
-                <div class="character-grid">
-                    <?php
-                    $characters = getCharactersByAnimeId($con, $anime['id']) ?: [
-                        ['name' => 'Rudeus Greyrat', 'role' => 'Main', 'image_url' => 'img/rudeus.jpg'],
-                        ['name' => 'Sylphitte (Fitz)', 'role' => 'Rudeus First Wife', 'image_url' => 'fitz-main.jfif'],
-                        ['name' => 'Roxy Migurdia', 'role' => 'Rudeus Second Wife', 'image_url' => 'roxy-main.webp'],
-                        ['name' => 'Eris Boreas Greyrat', 'role' => 'Rudeus Third Wife', 'image_url' => 'eris-main.webp'],
-                        ['name' => 'Norn Greyrat & Aisha Greyrat', 'role' => 'Young Half-Sisters', 'image_url' => 'img/norn & aisha-main.webp'],
-                        ['name' => 'Zenith Greyrat', 'role' => 'Rudeus Mother', 'image_url' => 'img/zenith-main.jpeg']
+        <!-- Tags section para sa mas specific na categories -->
+        <div class="sidebar-section">
+            <h4>Tags</h4>
+            <div class="tags-list">
+                <span class="tag">Isekai</span>
+                <span class="tag">Magic</span>
+                <span class="tag">Coming of Age</span>
+                <span class="tag">Reincarnation</span>
+            </div>
+        </div>
+    </div>
 
-                    ];
+    <!-- Main Body: Pangunahing nilalaman ng pahina -->
+    <div class="details-body">
+        <section class="content-section">
+            <!-- List ng mga characters sa kabilang sa serye -->
+            <h3>Characters</h3>
+            <!-- Grid container para sa character cards -->
+            <div class="character-grid">
+                <?php
+                // Hanapin ang characters sa DB; kung wala, gumamit ng hardcoded default data
+                $characters = getCharactersByAnimeId($con, $anime['id']) ?: [
+                    ['name' => 'Rudeus Greyrat', 'role' => 'Main', 'image_url' => 'img/rudeus-main.webp'],
+                    ['name' => 'Sylphiette', 'role' => 'Main', 'image_url' => 'img/sylphie-main.jpg']
+                ];
 
-                    foreach ($characters as $char) {
-                        ?>
-                        <div class="character-card">
-                            <div class="char-img">
-                                <img src="<?php echo $char['image_url']; ?>" alt="<?php echo $char['name']; ?>">
-                            </div>
-                            <div class="char-details">
-                                <div class="char-name"><?php echo $char['name']; ?></div>
-                                <div class="char-role"><?php echo $char['role']; ?></div>
-                            </div>
-                        </div>
-                        <?php
-                    }
+                // I-loop ang bawat character para ma-render sa HTML
+                foreach ($characters as $char) {
                     ?>
-                </div>
-            </section>
-        </div>
-    </div>
-
-    <footer class="footer">
-        <div class="container footer-minimal">
-            <div class="footer-logo">AniCrave</div>
-            <div class="footer-links">
-                <a href="index.php">Home</a>
-                <a href="about.php">About</a>
-                <a href="#">Terms</a>
-                <a href="#">Privacy</a>
-                <a href="#">Contact</a>
-            </div>
-            <div class="footer-social">
-                <a href="#"><i class="fa-brands fa-twitter"></i></a>
-                <a href="#"><i class="fa-brands fa-instagram"></i></a>
-                <a href="#"><i class="fa-brands fa-discord"></i></a>
-            </div>
-            <div class="footer-copyright">
-                &copy; 2024 AniCrave. All rights reserved.
-            </div>
-        </div>
-    </footer>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const favBtn = document.getElementById('fav-btn');
-
-            const currentAnime = {
-                title: "Mushoku Tensei: Jobless Reincarnation Season 2",
-                cover: "img/tensei.webp",
-                url: "details-mushoku-tensei.php"
-            };
-
-            const favorites = JSON.parse(localStorage.getItem('aniCraveFavorites')) || [];
-            const isFavorite = favorites.some(anime => anime.title === currentAnime.title);
-
-            if (isFavorite) {
-                favBtn.style.backgroundColor = '#ff6b6b';
-                favBtn.innerHTML = '<span>Added to Favorites</span> <i class="fa-solid fa-heart"></i>';
-            }
-
-            favBtn.addEventListener('click', () => {
-                let favorites = JSON.parse(localStorage.getItem('aniCraveFavorites')) || [];
-                const isFav = favorites.some(anime => anime.title === currentAnime.title);
-
-                if (!isFav) {
-                    favorites.push(currentAnime);
-                    localStorage.setItem('aniCraveFavorites', JSON.stringify(favorites));
-                    favBtn.style.backgroundColor = '#ff6b6b';
-                    favBtn.innerHTML = '<span>Added to Favorites</span> <i class="fa-solid fa-heart"></i>';
-                } else {
-                    favorites = favorites.filter(anime => anime.title !== currentAnime.title);
-                    localStorage.setItem('aniCraveFavorites', JSON.stringify(favorites));
-                    favBtn.style.backgroundColor = '';
-                    favBtn.innerHTML = '<span>Add to Favorites</span> <i class="fa-regular fa-heart"></i>';
+                    <div class="character-card">
+                        <!-- Imahe ng character -->
+                        <div class="char-img">
+                            <img src="<?php echo $char['image_url']; ?>" alt="<?php echo $char['name']; ?>">
+                        </div>
+                        <!-- Detalye: Pangalan at Role (Main/Supporting) -->
+                        <div class="char-details">
+                            <div class="char-name"><?php echo $char['name']; ?></div>
+                            <div class="char-role"><?php echo $char['role']; ?></div>
+                        </div>
+                    </div>
+                    <?php
                 }
-            });
+                ?>
+            </div>
+        </section>
+    </div>
+</div>
+
+<!-- Isama ang footer component ng website -->
+<?php include 'includes/footer.php'; ?>
+
+<!-- Client-side logic gamit ang JavaScript -->
+<script>
+    // Siguraduhin na loaded na ang DOM bago patakbuhin ang script
+    document.addEventListener('DOMContentLoaded', () => {
+        // Kunin ang favorite button element
+        const favBtn = document.getElementById('fav-btn');
+
+        // Magdagdag ng click event listener sa favorite button
+        favBtn.addEventListener('click', () => {
+            // Kunin ang anime ID mula sa data-id attribute ng button
+            const animeId = favBtn.getAttribute('data-id');
+
+            // Tumawag sa toggle_favorite.php API gamit ang fetch
+            fetch('toggle_favorite.php', {
+                method: 'POST', // Gamit ang POST method para magpadala ng data
+                headers: {
+                    'Content-Type': 'application/json', // Ipaalam sa server na JSON ang ipinadalang body
+                },
+                // I-convert ang JS object sa JSON string
+                body: JSON.stringify({ anime_id: animeId })
+            })
+                // I-parse ang server response bilang JSON
+                .then(response => response.json())
+                .then(data => {
+                    // Kung matagumpay ang request sa server
+                    if (data.status === 'success') {
+                        // Kung ang anime ay idinagdag sa favorites
+                        if (data.action === 'added') {
+                            // Baguhin ang kulay at text ng button para maging "Added"
+                            favBtn.style.backgroundColor = '#ff6b6b';
+                            favBtn.innerHTML = '<span>Added to Favorites</span> <i class="fa-solid fa-heart"></i>';
+
+                            // Ipakita ang success alert gamit ang SweetAlert2
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Added!',
+                                text: 'Anime has been added to your favorites.',
+                                confirmButtonColor: '#3DB4F2',
+                                timer: 1500, // Awtomatikong mawawala pagkaraan ng 1.5 segundo
+                                showConfirmButton: false
+                            });
+                        } else {
+                            // Kung ang anime ay tinanggal sa favorites
+                            // Ibalik sa orihinal na hitsura ang button
+                            favBtn.style.backgroundColor = '';
+                            favBtn.innerHTML = '<span>Add to Favorites</span> <i class="fa-regular fa-heart"></i>';
+
+                            // Ipakita ang notification na tinanggal na ang anime
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Removed!',
+                                text: 'Anime has been removed from your favorites.',
+                                confirmButtonColor: '#3DB4F2',
+                                timer: 1500,
+                                showConfirmButton: false
+                            });
+                        }
+                    } else {
+                        // Kung may error o hindi naka-login ang user
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Wait!',
+                            text: data.message || 'Please login to add favorites.',
+                            confirmButtonColor: '#3DB4F2'
+                        });
+                    }
+                })
+                // Saluhin ang anumang network or server errors
+                .catch(error => {
+                    console.error('Error:', error);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Failed to communicate with the server.',
+                        confirmButtonColor: '#3DB4F2'
+                    });
+                });
         });
-    </script>
+    });
+</script>
 </body>
 
 </html>

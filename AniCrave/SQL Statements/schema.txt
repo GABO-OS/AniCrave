@@ -39,6 +39,7 @@ CREATE TABLE favorites (
   id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   user_id INT NOT NULL,
   anime_id INT NOT NULL,
+  anime_title VARCHAR(255) DEFAULT NULL,
   added_at TIMESTAMP NOT NULL DEFAULT current_timestamp(),
   UNIQUE KEY unique_favorite (user_id, anime_id),
   KEY `user_id` (`user_id`),

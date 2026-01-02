@@ -1,14 +1,24 @@
+/* ==========================================================================
+   VARIABLES & DESIGN TOKENS
+   Dito nakalagay ang mga hex colors at fonts na ginagamit sa buong site.
+   ========================================================================== */
 :root {
     --bg-color: #0B1622;
+    /* Main background color (Dark Blue) */
     --bg-secondary: #151F2E;
+    /* Secondary background para sa cards at sections */
     --primary-blue: #3DB4F2;
+    /* Highlight/Action color */
     --text-main: #EDF1F5;
+    /* Primary text color */
     --text-muted: #9CADBD;
+    /* De-emphasized text color */
     --text-nav: #A0B1C5;
+    /* Navigation link color */
     --font-main: 'Overpass', sans-serif;
-    /* Similar to AniList's font */
 }
 
+/* Reset Default Styles para consistent ang itsura sa lahat ng browsers */
 * {
     box-sizing: border-box;
     margin: 0;
@@ -33,21 +43,24 @@ ul {
     list-style: none;
 }
 
-/* Utilities */
+/* Layout Utilities */
 .container {
     max-width: 1100px;
     margin: 0 auto;
     padding: 0 20px;
 }
 
-/* Navbar */
+/* ==========================================================================
+   NAVBAR & NAVIGATION
+   Ang navigation bar na makikita sa itaas ng lahat ng pages.
+   ========================================================================== */
 .navbar {
     background-color: #2B2D42;
     /* Darker header background */
     background: #2b2d42;
     /* Fallback */
     background-color: #151f2e;
-    /* AniList header color match */
+    /* Header color */
     height: 75px;
     display: flex;
     align-items: center;
@@ -99,6 +112,96 @@ ul {
     align-items: center;
 }
 
+.auth-buttons {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+/* Profile Dropdown logic sa navbar */
+.profile-dropdown {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.auth-buttons .profile-icon-link {
+    font-size: 24px;
+    color: white;
+    background-color: var(--primary-blue);
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 10px rgba(61, 180, 242, 0.4);
+}
+
+.auth-buttons .profile-icon-link:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(61, 180, 242, 0.6);
+}
+
+/* Dropdown Menu */
+.dropdown-menu {
+    position: absolute;
+    top: calc(100% + 10px);
+    right: 0;
+    background: rgba(15, 22, 33, 0.95);
+    backdrop-filter: blur(10px);
+    /* Blur effect para sa "glass" look */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    width: 220px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1000;
+}
+
+.profile-dropdown:hover .dropdown-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 500;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.dropdown-item i {
+    font-size: 18px;
+    width: 20px;
+    text-align: center;
+}
+
+.dropdown-item:hover {
+    background: rgba(61, 180, 242, 0.1);
+    color: var(--primary-blue);
+}
+
+.dropdown-item.logout-item:hover {
+    background: rgba(255, 107, 107, 0.1);
+    color: #ff6b6b;
+}
+
 .auth-buttons .login {
     /* color: var(--text-nav);
     font-weight: 600; */
@@ -123,6 +226,10 @@ ul {
     box-shadow: 0 0 15px rgba(61, 180, 242, 0.6);
 }
 
+/* ==========================================================================
+   HERO SECTION (INDEX PAGE)
+   Malaking intro section na may key features at CTA button.
+   ========================================================================== */
 /* Hero Section */
 .hero {
     background-color: var(--bg-color);
@@ -223,6 +330,10 @@ ul {
     box-shadow: 0 8px 25px rgba(61, 180, 242, 0.4);
 }
 
+/* ==========================================================================
+   FILTERS & ANIME GRID
+   Dito nakalagay ang styles para sa main content ng discovery page.
+   ========================================================================== */
 /* Filters Section */
 .filters-section {
     padding: 20px 0;
@@ -408,6 +519,10 @@ select {
     }
 }
 
+/* ==========================================================================
+   AUTHENTICATION PAGES (LOGIN/SIGNUP)
+   Styles para sa login at registration cards.
+   ========================================================================== */
 /* Login Page Styles */
 .auth-container {
     min-height: calc(100vh - 75px);
@@ -511,6 +626,10 @@ select {
     text-align: left;
 }
 
+/* ==========================================================================
+   ANIME DETAILS PAGE
+   Dito nakalagay ang lahat ng styles para sa single anime information page.
+   ========================================================================== */
 /* Details Page Styles */
 .details-banner {
     height: 250px;
@@ -535,7 +654,7 @@ select {
     gap: 30px;
     position: relative;
     margin-top: -100px;
-    /* Overlap banner */
+    /* Hinihila ang content pataas para mag-overlap sa banner */
     margin-bottom: 30px;
     z-index: 5;
 }
@@ -680,6 +799,7 @@ select {
     font-weight: 600;
 }
 
+/* Character and Relationship grids sa details page */
 /* Relations/Characters Grid */
 .relations-grid,
 .character-grid {
@@ -790,6 +910,10 @@ select {
     }
 }
 
+/* ==========================================================================
+   FOOTER SECTION
+   Standard footer na matatagpuan sa ilalim ng bawat page.
+   ========================================================================== */
 /* Footer */
 .footer {
     background-color: var(--bg-secondary);
@@ -890,6 +1014,10 @@ select {
     background-color: #fa7693;
 }
 
+/* ==========================================================================
+   ABOUT PAGE
+   Styles para sa company information at features showcase page.
+   ========================================================================== */
 /* About Page Styles */
 .about-hero {
     background: radial-gradient(circle at top center, #1b263b 0%, var(--bg-color) 70%);
@@ -914,7 +1042,7 @@ select {
 }
 
 .about-container {
-    padding-bottom: 80px;
+    padding-top: 20px;
 }
 
 .about-section {
@@ -926,6 +1054,7 @@ select {
     align-items: center;
     gap: 15px;
     margin-bottom: 25px;
+    justify-content: flex-start;
 }
 
 .section-icon {
@@ -952,6 +1081,9 @@ select {
     grid-template-columns: repeat(3, 1fr);
     gap: 30px;
     margin-top: 30px;
+    max-width: 1000px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .feature-card {
@@ -1163,36 +1295,82 @@ select {
     }
 }
 
+/* ==========================================================================
+   ACCOUNT MANAGEMENT
+   Dito nakalagay ang styles para sa user profile and account settings.
+   ========================================================================== */
 /* Account Management Page */
 .account-container {
     min-height: calc(100vh - 75px);
     padding: 60px 20px;
-    background: radial-gradient(circle at top center, #1b263b 0%, var(--bg-color) 50%);
+    background: radial-gradient(circle at top left, #1b263b 0%, var(--bg-color) 70%);
+}
+
+.account-header {
+    text-align: center;
+    margin-bottom: 50px;
 }
 
 .account-title {
-    font-size: 32px;
+    font-size: 40px;
     color: var(--text-main);
-    margin-bottom: 40px;
-    text-align: center;
-    font-weight: 700;
+    margin-bottom: 10px;
+    font-weight: 800;
+    color: #fff;
+    /* Fallback */
+    background: linear-gradient(135deg, var(--primary-blue), #8da1e4);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.account-subtitle {
+    color: var(--text-muted);
+    font-size: 16px;
 }
 
 .account-content {
-    display: grid;
-    grid-template-columns: 300px 1fr;
-    gap: 40px;
-    max-width: 1000px;
+    max-width: 1100px;
     margin: 0 auto;
+    display: flex;
+    justify-content: center;
 }
 
-/* Profile Picture Section */
+.account-form {
+    display: flex;
+    flex-direction: row;
+    gap: 60px;
+    align-items: flex-start;
+    justify-content: center;
+    width: 100%;
+}
+
+.account-form input[type="hidden"] {
+    display: none;
+}
+
 .profile-picture-section {
+    flex: 0 0 280px;
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 20px;
+    position: sticky;
+    /* Mananatili sa taas habang nag-sscroll ang user */
+    top: 95px;
+    align-self: flex-start;
+    z-index: 10;
 }
+
+.account-form-section {
+    flex: 0 1 600px;
+    background-color: var(--bg-secondary);
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+}
+
+/* Profile Picture Container */
 
 .profile-picture-container {
     width: 200px;
@@ -1200,8 +1378,13 @@ select {
     border-radius: 50%;
     overflow: hidden;
     position: relative;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 15px 45px rgba(0, 0, 0, 0.4);
     cursor: pointer;
+    background-color: #0b1622;
+    border: 5px solid #1b263b;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .profile-picture-container img {
@@ -1259,19 +1442,9 @@ select {
     text-align: center;
 }
 
-/* Account Form Section */
-.account-form-section {
-    background-color: var(--bg-secondary);
-    padding: 30px;
-    border-radius: 12px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-}
+/* Profile Picture Section styles (moved to form grid) */
 
-.account-form {
-    display: flex;
-    flex-direction: column;
-    gap: 25px;
-}
+/* Moved grid properties to .account-form */
 
 .form-row {
     display: grid;
@@ -1300,14 +1473,14 @@ select {
 .form-group input,
 .form-group select,
 .form-group textarea {
-    padding: 12px 15px;
-    border-radius: 6px;
-    border: 1px solid transparent;
-    background-color: #0B1622;
+    padding: 14px 18px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background-color: #0b1622;
     color: var(--text-main);
     font-family: inherit;
-    font-size: 14px;
-    transition: all 0.2s;
+    font-size: 15px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .form-group input:focus,
@@ -1369,20 +1542,59 @@ select {
 }
 
 .cancel-btn {
-    background-color: transparent;
+    background-color: rgba(255, 255, 255, 0.05);
     color: var(--text-muted);
-    border: 2px solid var(--bg-color);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .cancel-btn:hover {
-    background-color: var(--bg-color);
-    color: var(--text-main);
+    background-color: rgba(255, 107, 107, 0.1);
+    color: #ff6b6b;
+    border-color: #ff6b6b;
 }
 
 /* Responsive Account Page */
+@media (max-width: 900px) {
+    .account-container {
+        padding: 40px 15px;
+    }
+
+    .account-title {
+        font-size: 32px;
+    }
+
+    .account-form {
+        gap: 30px;
+    }
+
+    .profile-picture-section {
+        flex: 0 0 220px;
+    }
+
+    .profile-picture-container {
+        width: 180px;
+        height: 180px;
+    }
+}
+
 @media (max-width: 768px) {
-    .account-content {
-        grid-template-columns: 1fr;
+    .account-form {
+        flex-direction: column;
+        align-items: center;
+        gap: 40px;
+    }
+
+    .profile-picture-section {
+        flex: 1;
+        position: static;
+        width: 100%;
+        top: 0;
+    }
+
+    .account-form-section {
+        width: 100%;
+        max-width: 100%;
+        padding: 30px 20px;
     }
 
     .form-row {
@@ -1391,10 +1603,38 @@ select {
 
     .form-actions {
         flex-direction: column;
+        gap: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .account-title {
+        font-size: 28px;
     }
 
-    .profile-picture-container {
-        width: 150px;
-        height: 150px;
+    .account-header {
+        margin-bottom: 30px;
+    }
+
+    .account-form-section {
+        padding: 25px 15px;
+        border-radius: 12px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        padding: 12px 14px;
+        font-size: 14px;
+    }
+
+    .upload-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .save-btn,
+    .cancel-btn {
+        padding: 12px 20px;
     }
 }

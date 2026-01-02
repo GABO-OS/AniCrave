@@ -1,30 +1,37 @@
 <?php
+// Start yung session para ma-track if logged in na yung user
 session_start();
+// Include connection logic
 include('connect.php');
 
+// Initialize empty strings for UI feedback through SweetAlert
 $error = "";
 $success = "";
 
+// Check if may form submission
 if (isset($_POST['action'])) {
+    // Signup process for new users
     if ($_POST['action'] == 'signup') {
+        // Sanitize strings from the request
         $username = mysqli_real_escape_string($con, $_POST['username']);
         $email = mysqli_real_escape_string($con, $_POST['email']);
         $password = $_POST['password'];
         $confirm_password = $_POST['confirm_password'];
 
+        // Initial validation: check if mismatch yung passwords
         if ($password !== $confirm_password) {
             $error = "Passwords do not match!";
         } else {
-            // Check if email already exists
+            // Check if existing na yung email sa system
             $check_sql = "SELECT * FROM `signup` WHERE email = '$email'";
             $check_result = mysqli_query($con, $check_sql);
             if (mysqli_num_rows($check_result) > 0) {
                 $error = "Email already registered!";
             } else {
-                // Hash the password
+                // Secure passwords through hashing
                 $password_hashed = password_hash($password, PASSWORD_DEFAULT);
 
-                // Insert new user
+                // Insert into db yung bagong user
                 $sql = "INSERT INTO `signup` (username, email, password_hashed) VALUES ('$username', '$email', '$password_hashed')";
                 if (mysqli_query($con, $sql)) {
                     $success = "Registration successful! You can now login.";
@@ -33,25 +40,31 @@ if (isset($_POST['action'])) {
                 }
             }
         }
-    } elseif ($_POST['action'] == 'login') {
+    }
+    // Login handle logic
+    elseif ($_POST['action'] == 'login') {
         $email = mysqli_real_escape_string($con, $_POST['email']);
         $password = $_POST['password'];
 
+        // Pull user record based on email
         $sql = "SELECT * FROM `signup` WHERE email = '$email'";
         $result = mysqli_query($con, $sql);
 
+        // If user is found, proceed sa password verification
         if (mysqli_num_rows($result) > 0) {
             $user = mysqli_fetch_assoc($result);
-            // Verify password using password_verify
             if (password_verify($password, $user['password_hashed'])) {
+                // Success path: Setup session variables and redirect
                 $_SESSION['user_id'] = $user['id'];
                 $_SESSION['username'] = $user['username'];
                 header("Location: index.php");
                 exit();
             } else {
+                // Error on password check
                 $error = "Invalid email or password!";
             }
         } else {
+            // Error when no match yung email
             $error = "Invalid email or password!";
         }
     }
@@ -66,18 +79,20 @@ if (isset($_POST['action'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - AniCrave</title>
     <link rel="stylesheet" href="styles.css">
+    <!-- Load required fonts from Google -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
         href="https://fonts.googleapis.com/css2?family=Overpass:wght@400;600;700;800&family=Roboto:wght@400;500;700&display=swap"
         rel="stylesheet">
+    <!-- Font Awesome icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- SweetAlert2 -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 </head>
 
 <body>
 
+    <!-- Simple Navbar structure -->
     <header class="navbar">
         <div class="container navbar-container">
             <div class="logo">
@@ -86,6 +101,7 @@ if (isset($_POST['action'])) {
         </div>
     </header>
 
+    <!-- Main Section for Auth cards -->
     <div class="auth-container">
         <div class="auth-card">
             <div class="auth-header">
@@ -93,6 +109,7 @@ if (isset($_POST['action'])) {
                 <p id="form-subtitle">Welcome back to AniCrave</p>
             </div>
 
+            <!-- Login form block -->
             <form class="auth-form" id="login-form" method="POST" action="login.php">
                 <input type="hidden" name="action" value="login">
                 <div class="input-group">
@@ -104,6 +121,7 @@ if (isset($_POST['action'])) {
                 <button type="submit" name="sub" class="submit-btn">Login</button>
             </form>
 
+            <!-- Sign up form block (hidden by default) -->
             <form class="auth-form hidden" id="register-form" method="POST" action="login.php">
                 <input type="hidden" name="action" value="signup">
                 <div class="input-group">
@@ -121,13 +139,14 @@ if (isset($_POST['action'])) {
                 <button type="submit" name="sub" class="submit-btn">Sign Up</button>
             </form>
 
+            <!-- Toggle UI to switch forms -->
             <div class="auth-footer">
                 <p id="toggle-text">Don't have an account? <a href="#" id="toggle-form">Sign Up</a></p>
             </div>
         </div>
     </div>
 
-    <!-- Footer -->
+    <!-- Reusable footer -->
     <footer class="footer">
         <div class="container footer-minimal">
             <div class="footer-logo">AniCrave</div>
@@ -150,6 +169,7 @@ if (isset($_POST['action'])) {
     </footer>
 
     <script>
+        // DOM elements for form toggling
         const toggleLink = document.getElementById('toggle-form');
         const loginForm = document.getElementById('login-form');
         const registerForm = document.getElementById('register-form');
@@ -157,7 +177,7 @@ if (isset($_POST['action'])) {
         const formSubtitle = document.getElementById('form-subtitle');
         const toggleText = document.getElementById('toggle-text');
 
-        // Show PHP messages using SweetAlert
+        // Check for error variable passed from PHP to JS
         <?php if ($error): ?>
             Swal.fire({
                 icon: 'error',
@@ -167,6 +187,7 @@ if (isset($_POST['action'])) {
             });
         <?php endif; ?>
 
+        // Same check for success feedback
         <?php if ($success): ?>
             Swal.fire({
                 icon: 'success',
@@ -176,11 +197,10 @@ if (isset($_POST['action'])) {
             });
         <?php endif; ?>
 
-        // Helper to show error
+        // Manual validation feedback for users
         function showError(form, message) {
             let errorDiv = form.querySelector('.error-message');
             if (!errorDiv) {
-                // Insert error div at the top of the form
                 errorDiv = document.createElement('div');
                 errorDiv.className = 'error-message';
                 form.insertBefore(errorDiv, form.firstChild);
@@ -189,6 +209,7 @@ if (isset($_POST['action'])) {
             errorDiv.style.display = 'block';
         }
 
+        // Clean up error notifications
         function clearError(form) {
             const errorDiv = form.querySelector('.error-message');
             if (errorDiv) {
@@ -198,6 +219,7 @@ if (isset($_POST['action'])) {
 
         let isLogin = true;
 
+        // Toggle handler: switches state and updates texts/classes
         function toggleHandler(e) {
             e.preventDefault();
             isLogin = !isLogin;
@@ -222,10 +244,9 @@ if (isset($_POST['action'])) {
             }
         }
 
-        // Use onclick to ensure clean event binding
         toggleLink.onclick = toggleHandler;
 
-        // Form Validation before submission
+        // Final input validation before form submission
         loginForm.addEventListener('submit', (e) => {
             const email = loginForm.querySelector('input[name="email"]').value;
             const password = loginForm.querySelector('input[name="password"]').value;
@@ -236,6 +257,7 @@ if (isset($_POST['action'])) {
             }
         });
 
+        // Sign up complex validation helper
         registerForm.addEventListener('submit', (e) => {
             const username = registerForm.querySelector('input[name="username"]').value;
             const email = registerForm.querySelector('input[name="email"]').value;
