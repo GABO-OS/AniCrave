@@ -1,0 +1,19 @@
+CLIENT-SERVER RELATIONSHIP SA ERROR MESSAGES
+
+1. Ang Server (toggle_favorite.php) ang "Boss"
+   - Siya ang tunay na nakakaalam kung allowed ba ang action o bawal.
+   - Siya ang nagde-decide kung tatanggapin ang request.
+   - Dito natin inilalagay ang official na message logic.
+   - Example: 
+     echo json_encode(['status' => 'error', 'message' => 'Login muna bago ang lahat.']);
+
+2. Ang Client/Browser (details-*.php JS) ang "Messenger"
+   - Siya lang ang taga-display sa user.
+   - Sa linyang: `text: data.message || 'Please login to add favorites.'`
+     - Ang `data.message` ay galing sa PHP ("Login muna bago ang lahat.").
+     - Ang `||` ay ibig sabihin "OR".
+     - Ang `'Please login...'` ay fallback lang o reserba.
+   
+SUMMARY:
+Ang PHP ang nagluluto (process & message), at ang JS lang ang waiter na naghahain (display).
+Kung ano ang sabihin ng PHP, yun ang lalabas sa screen.

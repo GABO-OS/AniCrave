@@ -41,13 +41,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
         // Move the file from temp to final destination
         if (move_uploaded_file($_FILES["profile_picture"]["tmp_name"], $target_file)) {
             $profile_picture = $target_file;
-            $update_pic_sql = "UPDATE signup SET profile_picture = '$profile_picture' WHERE id = '$user_id'";
+            $update_pic_sql = "UPDATE users SET profile_picture = '$profile_picture' WHERE id = '$user_id'";
             mysqli_query($con, $update_pic_sql);
         }
     }
 
     // Run the main update query for profile fields
-    $sql = "UPDATE signup SET 
+    $sql = "UPDATE users SET 
             username = '$username', 
             email = '$email', 
             gender = '$gender', 
@@ -66,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action']) && $_POST['a
 }
 
 // Query latest user data to display sa form
-$sql = "SELECT * FROM signup WHERE id = '$user_id'";
+$sql = "SELECT * FROM users WHERE id = '$user_id'";
 $result = mysqli_query($con, $sql);
 $user = mysqli_fetch_assoc($result);
 
@@ -114,6 +114,21 @@ include 'includes/header.php';
                         <i class="fa-solid fa-upload"></i> Upload Picture
                     </button>
                     <p class="upload-hint">JPG, PNG or GIF. Max size 5MB.</p>
+
+                    <?php
+                    // Determine Role Badge
+                    $role_label = "MEMBER";
+                    $role_class = "role-user";
+
+                    if (isset($user['role']) && $user['role'] === 'admin') {
+                        $role_label = "ADMINISTRATOR";
+                        $role_class = "role-admin";
+                    }
+                    ?>
+
+                    <div class="<?php echo $role_class; ?> role-badge">
+                        <?php echo $role_label; ?>
+                    </div>
                 </div>
 
                 <!-- Form fields for text and dropdown inputs -->

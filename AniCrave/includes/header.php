@@ -45,12 +45,22 @@ include_once 'connect.php';
             <!-- User Auth state controls -->
             <div class="auth-buttons">
                 <?php if (isset($_SESSION['user_id'])):
-                    // Fetch profile picture for the dropdown
+                    // Kunin yung profile picture ng user para ipakita sa bilog na avatar sa itaas
                     $header_user_id = $_SESSION['user_id'];
-                    $header_sql = "SELECT profile_picture FROM signup WHERE id = '$header_user_id'";
-                    $header_result = mysqli_query($con, $header_sql);
-                    $header_user = mysqli_fetch_assoc($header_result);
-                    $profile_pic = !empty($header_user['profile_picture']) ? $header_user['profile_picture'] : '';
+                    $profile_pic = '';
+
+                    // Kapag 'MASTER' admin, wala siyang database record kaya gumagamit tayo ng fixed icon
+                    if ($header_user_id === 'MASTER') {
+                        $profile_pic = '';
+                    } else {
+                        // SQL query para hanapin yung path ng image ng user
+                        $header_sql = "SELECT profile_picture FROM users WHERE id = '$header_user_id'";
+                        $header_result = mysqli_query($con, $header_sql);
+                        if ($header_result && mysqli_num_rows($header_result) > 0) {
+                            $header_user = mysqli_fetch_assoc($header_result);
+                            $profile_pic = !empty($header_user['profile_picture']) ? $header_user['profile_picture'] : '';
+                        }
+                    }
                     ?>
                     <div class="profile-dropdown">
                         <a href="account.php" class="profile-icon-link">
@@ -58,7 +68,7 @@ include_once 'connect.php';
                                 <img src="<?php echo $profile_pic; ?>" alt="Profile"
                                     style="width: 100%; height: 100%; object-fit: cover; border-radius: 6px;">
                             <?php else: ?>
-                                <i class="fa-solid fa-user"></i>
+                                <i class="fa-solid fa-user-shield"></i>
                             <?php endif; ?>
                         </a>
                         <div class="dropdown-menu">
@@ -66,10 +76,14 @@ include_once 'connect.php';
                                 <i class="fa-solid fa-circle-user"></i>
                                 <span>Profile</span>
                             </a>
-                            <a href="favorites.php" class="dropdown-item">
-                                <i class="fa-solid fa-heart"></i>
-                                <span>Favorites</span>
-                            </a>
+
+                            <!-- Admin Panel Link -->
+                            <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'admin'): ?>
+                                <a href="admin_dashboard.php" class="dropdown-item">
+                                    <i class="fa-solid fa-lock"></i>
+                                    <span>Admin Panel</span>
+                                </a>
+                            <?php endif; ?>
                             <a href="logout.php" class="dropdown-item logout-item">
                                 <i class="fa-solid fa-right-from-bracket"></i>
                                 <span>Logout</span>

@@ -18,12 +18,31 @@ if (isset($_POST['action'])) {
         $password = $_POST['password'];
         $confirm_password = $_POST['confirm_password'];
 
+        // Admin Key Verification Logic
+        // Define your secret key here
+        $admin_secret_key = "ANICRAVE_ADMIN_2024";
+
+        // Check if the provided admin key matches the secret
+        $signup_role = 'user'; // Default role
+        if (isset($_POST['admin_key']) && !empty($_POST['admin_key'])) {
+            if ($_POST['admin_key'] === $admin_secret_key) {
+                $signup_role = 'admin';
+            } else {
+                // Optional: You could show an error if they tried to be admin but failed
+                // For now, we just treat them as a normal user if key is wrong
+                // or we can fail the registration. Let's strictly require it for admin.
+                // If they entered something but it's wrong, maybe fail?
+                // For simplicity as per plan: Invalid/Empty -> User.
+                $signup_role = 'user';
+            }
+        }
+
         // Initial validation: check if mismatch yung passwords
         if ($password !== $confirm_password) {
             $error = "Passwords do not match!";
         } else {
             // Check if existing na yung email sa system
-            $check_sql = "SELECT * FROM `signup` WHERE email = '$email'";
+            $check_sql = "SELECT * FROM `users` WHERE email = '$email'";
             $check_result = mysqli_query($con, $check_sql);
             if (mysqli_num_rows($check_result) > 0) {
                 $error = "Email already registered!";
@@ -31,10 +50,11 @@ if (isset($_POST['action'])) {
                 // Secure passwords through hashing
                 $password_hashed = password_hash($password, PASSWORD_DEFAULT);
 
-                // Insert into db yung bagong user
-                $sql = "INSERT INTO `signup` (username, email, password_hashed) VALUES ('$username', '$email', '$password_hashed')";
+                // Insert into db yung bagong user with role
+                $sql = "INSERT INTO `users` (username, email, password_hashed, role) VALUES ('$username', '$email', '$password_hashed', '$signup_role')";
                 if (mysqli_query($con, $sql)) {
-                    $success = "Registration successful! You can now login.";
+                    $role_msg = ($signup_role === 'admin') ? " as ADMIN" : "";
+                    $success = "Registration successful{$role_msg}! You can now login.";
                 } else {
                     $error = "Registration failed: " . mysqli_error($con);
                 }
@@ -47,7 +67,7 @@ if (isset($_POST['action'])) {
         $password = $_POST['password'];
 
         // Pull user record based on email
-        $sql = "SELECT * FROM `signup` WHERE email = '$email'";
+        $sql = "SELECT * FROM `users` WHERE email = '$email'";
         $result = mysqli_query($con, $sql);
 
         // If user is found, proceed sa password verification
@@ -57,6 +77,9 @@ if (isset($_POST['action'])) {
                 // Success path: Setup session variables and redirect
                 $_SESSION['user_id'] = $user['id'];
                 $_SESSION['username'] = $user['username'];
+                // Auto-detect role from DB
+                $_SESSION['role'] = $user['role'];
+
                 header("Location: index.php");
                 exit();
             } else {
@@ -66,6 +89,21 @@ if (isset($_POST['action'])) {
         } else {
             // Error when no match yung email
             $error = "Invalid email or password!";
+        }
+    }
+    // Admin Key Login Logic
+    elseif ($_POST['action'] == 'admin_login') {
+        $key = $_POST['admin_key'];
+        $admin_secret_key = "administrator";
+
+        if ($key === $admin_secret_key) {
+            $_SESSION['user_id'] = 'MASTER';
+            $_SESSION['username'] = 'GABO';
+            $_SESSION['role'] = 'admin';
+            header("Location: admin_dashboard.php");
+            exit();
+        } else {
+            $error = "Invalid Admin Secret Key!";
         }
     }
 }
@@ -112,6 +150,9 @@ if (isset($_POST['action'])) {
             <!-- Login form block -->
             <form class="auth-form" id="login-form" method="POST" action="login.php">
                 <input type="hidden" name="action" value="login">
+
+                <!-- Role selection removed -->
+
                 <div class="input-group">
                     <input type="email" name="email" placeholder="Email" required>
                 </div>
@@ -124,6 +165,9 @@ if (isset($_POST['action'])) {
             <!-- Sign up form block (hidden by default) -->
             <form class="auth-form hidden" id="register-form" method="POST" action="login.php">
                 <input type="hidden" name="action" value="signup">
+
+                <!-- Role selection removed -->
+
                 <div class="input-group">
                     <input type="text" name="username" placeholder="Username" required>
                 </div>
@@ -139,9 +183,24 @@ if (isset($_POST['action'])) {
                 <button type="submit" name="sub" class="submit-btn">Sign Up</button>
             </form>
 
+            <!-- Admin Login Form (Hidden by default) -->
+            <form class="auth-form hidden" id="admin-login-form" method="POST" action="login.php">
+                <input type="hidden" name="action" value="admin_login">
+                <div class="input-group">
+                    <input type="password" name="admin_key" placeholder="Enter Admin Secret Key" required
+                        style="border-color: var(--primary-blue);">
+                </div>
+                <button type="submit" name="sub" class="submit-btn" style="background-color: #F85D7F;">Access
+                    Dashboard</button>
+            </form>
+
             <!-- Toggle UI to switch forms -->
             <div class="auth-footer">
                 <p id="toggle-text">Don't have an account? <a href="#" id="toggle-form">Sign Up</a></p>
+                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.05);">
+                    <a href="#" id="toggle-admin" style="color: var(--text-nav); font-size: 12px;">Access Admin
+                        Dashboard</a>
+                </div>
             </div>
         </div>
     </div>
@@ -169,10 +228,11 @@ if (isset($_POST['action'])) {
     </footer>
 
     <script>
-        // DOM elements for form toggling
         const toggleLink = document.getElementById('toggle-form');
+        const adminToggle = document.getElementById('toggle-admin');
         const loginForm = document.getElementById('login-form');
         const registerForm = document.getElementById('register-form');
+        const adminForm = document.getElementById('admin-login-form');
         const formTitle = document.getElementById('form-title');
         const formSubtitle = document.getElementById('form-subtitle');
         const toggleText = document.getElementById('toggle-text');
@@ -222,10 +282,21 @@ if (isset($_POST['action'])) {
         // Toggle handler: switches state and updates texts/classes
         function toggleHandler(e) {
             e.preventDefault();
-            isLogin = !isLogin;
+
+            // If currently viewing admin, reset to login first
+            if (!adminForm.classList.contains('hidden')) {
+                // If coming back from admin, go to login
+                isLogin = true;
+            } else {
+                isLogin = !isLogin;
+            }
+
+            // Hide Admin
+            adminForm.classList.add('hidden');
 
             clearError(loginForm);
             clearError(registerForm);
+            clearError(adminForm);
 
             if (isLogin) {
                 loginForm.classList.remove('hidden');
@@ -233,16 +304,52 @@ if (isset($_POST['action'])) {
                 formTitle.textContent = 'Login';
                 formSubtitle.textContent = 'Welcome back to AniCrave';
                 toggleLink.textContent = 'Sign Up';
-                toggleText.childNodes[0].nodeValue = "Don't have an account? ";
+                toggleText.innerHTML = "Don't have an account? <a href='#' id='toggle-form'>Sign Up</a>";
+                toggleText.style.display = 'block';
+                // Re-attach event because innerHTML replace destroys listener on link
+                document.getElementById('toggle-form').onclick = toggleHandler;
             } else {
                 loginForm.classList.add('hidden');
                 registerForm.classList.remove('hidden');
                 formTitle.textContent = 'Sign Up';
                 formSubtitle.textContent = 'Join the community';
                 toggleLink.textContent = 'Login';
-                toggleText.childNodes[0].nodeValue = "Already have an account? ";
+                toggleText.innerHTML = "Already have an account? <a href='#' id='toggle-form'>Login</a>";
+                toggleText.style.display = 'block';
+                document.getElementById('toggle-form').onclick = toggleHandler;
             }
         }
+
+        adminToggle.onclick = (e) => {
+            e.preventDefault();
+            loginForm.classList.add('hidden');
+            registerForm.classList.add('hidden');
+            adminForm.classList.remove('hidden');
+
+            toggleText.style.display = 'none'; // Hide the signup/login toggle
+
+            formTitle.textContent = 'Admin Access';
+            formSubtitle.textContent = 'Enter your security credentials';
+
+            // Update the "Access Admin..." link to say "Back to Login"
+            // We can just add a back button logic, but let's make the text toggle
+            // Actually simpler: user can just click the "Access Admin" link which logic we can swap
+            // Or we just rely on page refresh? No let's add a "Back" logic.
+            // For simplicity, let's just create a separate back function logic in the toggleHandler if needed
+            // But here, if they want to go back, they can click the bottom link again?
+            // Let's change the bottom link text to 'Back to User Login'
+
+            // Only if we haven't already swapped it.
+            // But to keep it simple, reloading the page or clicking "Sign Up" inside the toggle text (which is hidden) won't work.
+            // Let's just make a dedicated "Back to User Login" appearing somewhere.
+
+            // Better UX: Make the toggle-admin link function as a "Cancel"
+            adminToggle.textContent = "Back to User Login";
+            adminToggle.onclick = (evt) => {
+                evt.preventDefault();
+                location.reload(); // Simplest way to reset state without complex logic
+            };
+        };
 
         toggleLink.onclick = toggleHandler;
 

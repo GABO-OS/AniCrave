@@ -31,10 +31,11 @@ include 'connect.php';
 
             <div class="anime-grid" id="favorites-grid">
                 <?php
-                // Get favorites from database if logged in
+                // Kapag naka-login, kunin lahat ng anime na "heart" ng gumagamit
                 $has_favorites = false;
                 if (isset($_SESSION['user_id'])) {
                     $user_id = $_SESSION['user_id'];
+                    // SQL query para pag-samahin yung 'anime' table at 'favorites' table
                     $sql = "SELECT a.* FROM anime a 
                             JOIN favorites f ON a.id = f.anime_id 
                             WHERE f.user_id = '$user_id'
@@ -44,23 +45,7 @@ include 'connect.php';
                     if ($result && mysqli_num_rows($result) > 0) {
                         $has_favorites = true;
                         while ($anime = mysqli_fetch_assoc($result)) {
-                            // Mapping for custom filenames
-                            $url_mapping = [
-                                "Attack on Titan Final Season" => "details-aot.php",
-                                "The Apothecary Diaries" => "details-apothecary-diaries.php",
-                                "Kimetsu no Yaiba: Swordsmith Village Arc" => "details-demon-slayer.php",
-                                "Jujutsu Kaisen 2nd Season" => "details-jjk.php",
-                                "Mushoku Tensei: Jobless Reincarnation Season 2" => "details-mushoku-tensei.php",
-                                "Frieren: Beyond Journey's End" => "details-frieren.php",
-                                "Spy x Family Season 2" => "details-spy-family.php",
-                                "One Piece" => "details-one-piece.php",
-                                "Solo Leveling" => "details-solo-leveling.php",
-                                "Shangri-La Frontier" => "details-shangrila-frontier.php"
-                            ];
-
-                            $details_page = isset($url_mapping[$anime['title']])
-                                ? $url_mapping[$anime['title']]
-                                : 'details-' . str_replace(' ', '-', strtolower($anime['title'])) . '.php';
+                            $details_page = "details.php?id=" . $anime['id'];
                             ?>
                             <div class="anime-card" id="anime-<?php echo $anime['id']; ?>">
                                 <a href="<?php echo $details_page; ?>" style="display:block; color:inherit; text-decoration:none;">
@@ -97,11 +82,11 @@ include 'connect.php';
     ?>
 
     <script>
-        // Global removal function using SweetAlert and the new API
+        // Function para sa pag-remove ng favorite gamit ang SweetAlert toolkit
         window.removeFavorite = function (animeId, title) {
             Swal.fire({
                 title: 'Remove from Favorites?',
-                text: `Are you sure you want to remove "${title}" from your favorites?`,
+                text: `Sigurado ka bang tatanggalin si "${title}" sa collection mo?`,
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#ff6b6b',
@@ -110,7 +95,7 @@ include 'connect.php';
                 cancelButtonText: 'Cancel'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    // Call the toggle_favorite API
+                    // Tawagin yung toggle_favorite API para mawala sa database
                     fetch('toggle_favorite.php', {
                         method: 'POST',
                         headers: {
@@ -121,15 +106,15 @@ include 'connect.php';
                         .then(response => response.json())
                         .then(data => {
                             if (data.status === 'success') {
-                                // Remove the card from UI
+                                // Kapag burado na sa database, alisin na rin yung card sa browser UI
                                 const card = document.getElementById(`anime-${animeId}`);
                                 if (card) {
                                     card.remove();
 
-                                    // Check if grid is now empty
+                                    // Pag wala nang natira sa listahan, i-refresh yung page para lumabas ang "empty" message
                                     const grid = document.getElementById('favorites-grid');
                                     if (grid.querySelectorAll('.anime-card').length === 0) {
-                                        location.reload(); // Quick way to show empty message
+                                        location.reload();
                                     }
                                 }
 
@@ -152,12 +137,6 @@ include 'connect.php';
                         })
                         .catch(error => {
                             console.error('Error:', error);
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Error',
-                                text: 'Failed to communicate with the server.',
-                                confirmButtonColor: '#3DB4F2'
-                            });
                         });
                 }
             });

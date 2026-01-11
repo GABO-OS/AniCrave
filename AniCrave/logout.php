@@ -1,14 +1,14 @@
 <?php
-// Start yung session para ma-access ang current session data
+// Script para sa ligtas na pag-logout
 session_start();
 
-// Clear all session variables para logout na talaga
+// Burahin lahat ng session variables para walang maiwan na record ng account sa browser
 session_unset();
 
-// Destroy the session entirely from the server
+// Tuluyang sirain yung session session data
 session_destroy();
 
-// Redirect the user back sa login page pagkatapos ng logout
-header("Location: login.php");
+// Ibalik ang user sa index page pagkatapos mag-logout
+header("Location: index.php");
 exit();
 ?>
